@@ -1,0 +1,32 @@
+package com.itheima62.mobileguard.activities;
+
+import android.view.View;
+
+import com.itheima62.mobileguard.R;
+
+/**
+ * @author Administrator
+ * 第一个设置向导界面
+ */
+public class Setup2Activity extends BaseSetupActivity {
+	/**
+	 * 子类需要覆盖此方法，来完成界面的显示
+	 */
+	public void initView() {
+		setContentView(R.layout.activity_setup2);
+	}
+
+	@Override
+	public void nextActivity() {
+		// TODO Auto-generated method stub
+		startActivity(Setup3Activity.class);
+	}
+
+	@Override
+	public void prevActivity() {
+		// TODO Auto-generated method stub
+		startActivity(Setup1Activity.class);
+	}
+	
+	
+}

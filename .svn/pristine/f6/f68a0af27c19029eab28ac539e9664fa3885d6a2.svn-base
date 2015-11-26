@@ -1,0 +1,44 @@
+package com.itheima62.mobileguard.activities;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.KeyEvent;
+
+import com.itheima62.mobileguard.R;
+
+public class WatchDogEnterPassActivity extends Activity {
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		initView();
+	}
+
+	private void initView() {
+		setContentView(R.layout.activity_watchdog_enterpass);
+	}
+	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			//回到手机主界面
+			/*
+			 *  <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.MONKEY"/>
+            </intent-filter>
+			 */
+			Intent intent = new Intent("android.intent.action.MAIN");
+			intent.addCategory("android.intent.category.HOME");
+			intent.addCategory("android.intent.category.DEFAULT");
+			intent.addCategory("android.intent.category.MONKEY");
+			startActivity(intent);
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+
+}

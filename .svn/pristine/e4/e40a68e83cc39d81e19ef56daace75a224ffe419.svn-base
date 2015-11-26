@@ -1,0 +1,268 @@
+package com.itheima62.mobileguard.activities;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.app.Activity;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
+import android.text.format.Formatter;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.itheima62.mobileguard.R;
+import com.itheima62.mobileguard.domain.TaskBean;
+import com.itheima62.mobileguard.engine.TaskManagerEngine;
+
+/**
+ * 进程管家的界面
+ * @author Administrator
+ *
+ */
+public class TastManagerActivity extends Activity {
+	protected static final int LOADING = 1;
+	protected static final int FINISH = 2;
+	private TextView tv_tasknumber;
+	private TextView tv_meminfo;
+	private ListView lv_taskdatas;
+	private TextView tv_list_tag;
+	private ProgressBar pb_loading;
+	
+	private long availMem = 0;//可用内存大小
+	private long totalMem = 0; //总内存大小
+	
+	//系统进程数据
+	private List<TaskBean> sysTasks = new ArrayList<TaskBean>();
+	//用户进程数据
+	private List<TaskBean> userTasks = new ArrayList<TaskBean>();
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		
+		initView();//初始化界面
+		
+		initData();//设置数据
+	}
+	
+	/**
+	 * 进程数据的适配器
+	 * @author Administrator
+	 *
+	 */
+	private class MyAdapter extends BaseAdapter{
+
+		@Override
+		public int getCount() {
+			
+			return sysTasks.size() + 1 + userTasks.size() + 1;
+		}
+
+		@Override
+		public TaskBean getItem(int position) {
+			TaskBean bean = null;
+			if(position == 0 || position == userTasks.size() + 1){
+				return bean;
+			}
+			//判断position 如果是用户apk
+			if (position <= userTasks.size()) {
+				bean = userTasks.get(position - 1) ;
+			} else {
+				//系统apk
+				bean = sysTasks.get(position - userTasks.size() - 2);
+			}
+			
+			return bean;
+		}
+
+		@Override
+		public long getItemId(int position) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+	
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			if (position == 0) {
+				// 用户apk的标签
+				TextView tv_userTable = new TextView(getApplicationContext());
+				tv_userTable.setText("个人软件(" + userTasks.size() + ")");
+				tv_userTable.setTextColor(Color.WHITE);// 文字为白色
+				tv_userTable.setBackgroundColor(Color.GRAY);// 文字背景为灰色
+				return tv_userTable;
+			} else if (position == userTasks.size() + 1) {
+				// 系统apk标签
+				TextView tv_userTable = new TextView(getApplicationContext());
+				tv_userTable.setText("系统软件(" + sysTasks.size() + ")");
+				tv_userTable.setTextColor(Color.WHITE);// 文字为白色
+				tv_userTable.setBackgroundColor(Color.GRAY);// 文字背景为灰色
+				return tv_userTable;
+			} else {
+				// 界面的缓存
+				ViewHolder holder = new ViewHolder();
+
+				// 判断是否存在缓存
+				if (convertView != null
+						&& convertView instanceof RelativeLayout) {
+					holder = (ViewHolder) convertView.getTag();
+				} else {
+					convertView = View.inflate(getApplicationContext(),
+							R.layout.item_taskmanager_listview_item, null);
+
+					holder.iv_icon = (ImageView) convertView
+							.findViewById(R.id.iv_taskmanager_listview_item_icon);
+					holder.tv_title = (TextView) convertView
+							.findViewById(R.id.tv_taskmanager_listview_item_title);
+					holder.tv_memsize = (TextView) convertView
+							.findViewById(R.id.tv_taskmanager_listview_item_memsize);
+					holder.cb_checked = (CheckBox) convertView
+							.findViewById(R.id.tv_taskmanager_listview_item_checked);
+					// 绑定tag
+					convertView.setTag(holder);
+				}
+
+				final TaskBean bean = getItem(position);
+
+
+				// 设置数据
+				holder.iv_icon.setImageDrawable(bean.getIcon());// 设置图标
+
+				//设置占用的内存大小
+			    holder.tv_memsize.setText(Formatter.formatFileSize(getApplicationContext(), bean.getMemSize()));
+
+				holder.tv_title.setText(bean.getName());// 设置名字
+
+				//记录复选框的状态,记录bean中
+				
+				//给复选框加事件，记录复选框的状态
+				holder.cb_checked.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+					
+					@Override
+					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+						//记录复选框的状态
+						bean.setChecked(isChecked);
+					}
+				});
+				
+				//从bean取出复选框的状态显示
+				holder.cb_checked.setChecked(bean.isChecked());
+				return convertView;
+			}
+		}//end getView
+		
+	}//end class adapter
+		
+		private class ViewHolder {
+			ImageView iv_icon;//图标
+			TextView tv_title; //名字
+			TextView tv_memsize;//占用内存大小
+			CheckBox cb_checked;//是否选择
+		}
+
+	private Handler handler = new Handler(){
+		public void handleMessage(android.os.Message msg) {
+			switch (msg.what) {
+			case LOADING://加载数据进程显示
+				pb_loading.setVisibility(View.VISIBLE);
+				lv_taskdatas.setVisibility(View.GONE);
+				tv_list_tag.setVisibility(View.GONE);
+				break;
+			case FINISH://数据加载完成
+				pb_loading.setVisibility(View.GONE);
+				lv_taskdatas.setVisibility(View.VISIBLE);
+				tv_list_tag.setVisibility(View.VISIBLE);
+				
+				//设置运行中的进程个数
+				tv_tasknumber.setText("运行中的进程:" + (sysTasks.size() + userTasks.size()));
+				
+				//设置内存的使用信息
+				//格式化显示可用内存
+				String availMemFormatter = Formatter.formatFileSize(getApplicationContext(), availMem);
+				//格式化显示可用内存
+				String totalMemFormatter = Formatter.formatFileSize(getApplicationContext(), totalMem);
+				//设置内存的使用信息
+				tv_meminfo.setText("可用/总内存:" + availMemFormatter + "/" + totalMemFormatter);
+				
+				//数据的通知
+				adapter.notifyDataSetChanged();
+				break;
+			default:
+				break;
+			}
+		};
+	};
+	private MyAdapter adapter;
+	
+	private void initData() {
+		//子线程获取数据
+		
+		new Thread(){
+			public void run() {
+				
+				//发送加载数据进度的消息
+				handler.obtainMessage(LOADING).sendToTarget();
+				
+				//加载数据
+				//获取所有运行中的进程数据
+				List<TaskBean> allTaskDatas = TaskManagerEngine.getAllRunningTaskInfos(getApplicationContext());
+				availMem = TaskManagerEngine.getAvailMemSize(getApplicationContext());
+				totalMem = TaskManagerEngine.getTotalMemSize(getApplicationContext());
+				SystemClock.sleep(500);
+				sysTasks.clear();
+				userTasks.clear();
+				//分发数据
+				for (TaskBean taskBean : allTaskDatas) {
+					if (taskBean.isSystem()) {
+						//系统进程 
+						sysTasks.add(taskBean);
+					} else {
+						//用户进程
+						userTasks.add(taskBean);
+					}
+				}
+				System.out.println(allTaskDatas.size() + ":" + sysTasks.size() + ":" + userTasks.size());
+				
+				//加载数据完成
+				handler.obtainMessage(FINISH).sendToTarget();
+			};
+		}.start();
+	}
+
+	private void initView() {
+		setContentView(R.layout.activity_taskmanager);
+		
+		//显示进程的个数
+		tv_tasknumber = (TextView) findViewById(R.id.tv_taskmanager_tasknumber);
+		
+		//显示使用的内存信息
+		tv_meminfo = (TextView) findViewById(R.id.tv_taskmanager_meminfo);
+		
+		//显示所有进程的信息
+		lv_taskdatas = (ListView) findViewById(R.id.lv_taskmanager_appdatas);
+		
+		//进程数据的标签
+		tv_list_tag = (TextView) findViewById(R.id.tv_taskmanager_listview_lable);
+		
+		//加载进程数据的 进度
+		pb_loading = (ProgressBar) findViewById(R.id.pb_taskmanager_loading);
+		
+		adapter = new MyAdapter();
+		//设置listview的适配器
+		lv_taskdatas.setAdapter(adapter);
+		
+				
+	}
+	
+}

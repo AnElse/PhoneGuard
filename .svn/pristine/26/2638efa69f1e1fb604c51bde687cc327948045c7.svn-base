@@ -1,0 +1,137 @@
+package com.itheima62.mobileguard.service;
+
+import com.itheima62.mobileguard.R;
+import com.itheima62.mobileguard.engine.PhoneLocationEngine;
+
+import android.app.Service;
+import android.content.Intent;
+import android.graphics.PixelFormat;
+import android.os.IBinder;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.TextView;
+import android.widget.Toast;
+
+/**
+ * 该服务主要用于监控来电电话，并且显示归属地
+ * 
+ * @author Administrator
+ * 
+ */
+public class ComingPhoneService extends Service {
+
+	private TelephonyManager tm;
+	private PhoneStateListener listener;
+	private WindowManager.LayoutParams params;
+	private WindowManager wm;
+	private View view;
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void onCreate() {
+		// 初始化窗体管理器
+		wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+		// 初始化土司的参数
+		initToastParams();
+
+		// 初始化电话状态监听
+
+		// 获取电话管理器
+		tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+
+		// 电话状态监听器
+		listener = new PhoneStateListener() {
+
+			@Override
+			public void onCallStateChanged(int state, String incomingNumber) {
+
+				switch (state) {
+				case TelephonyManager.CALL_STATE_IDLE:// 空闲，挂断，初始会先执行
+					// 关闭土司
+					closeLocationToast();
+					break;
+				case TelephonyManager.CALL_STATE_OFFHOOK:// 通话状态
+					// 关闭土司
+					closeLocationToast();
+					break;
+				case TelephonyManager.CALL_STATE_RINGING:// 响铃状态
+					// 显示土司
+					showLocationToast(incomingNumber);// 显示归属地的土司
+					break;
+
+				default:
+					break;
+				}
+				super.onCallStateChanged(state, incomingNumber);
+			}
+
+		};
+
+		// 注册电话监听
+		tm.listen(listener, PhoneStateListener.LISTEN_CALL_STATE);
+		super.onCreate();
+	}
+
+	private void initToastParams() {
+		// TODO Auto-generated method stub
+		// XXX This should be changed to use a Dialog, with a Theme.Toast
+		// defined that sets up the layout params appropriately.
+
+		// 土司的初始化参数
+		params = new WindowManager.LayoutParams();
+		;
+		params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+		params.width = WindowManager.LayoutParams.WRAP_CONTENT;
+		params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+				| WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+				| WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+		params.format = PixelFormat.TRANSLUCENT;
+
+		params.type = WindowManager.LayoutParams.TYPE_TOAST;
+		params.setTitle("Toast");
+	}
+
+	/**
+	 * 关闭土司
+	 */
+	protected void closeLocationToast() {
+		// TODO Auto-generated method stub
+		// 初始先执行一次
+		if (view != null) {
+			wm.removeView(view);
+			view = null;//删除完 置为null
+		}
+	}
+
+	/**
+	 * 显示土司
+	 * 
+	 * @param incomingNumber
+	 *            电话号码
+	 */
+	protected void showLocationToast(String incomingNumber) {
+		// 土司显示的view
+		view = View.inflate(getApplicationContext(), R.layout.sys_toast, null);
+		TextView tv_location = (TextView) view
+				.findViewById(R.id.tv_toast_location);
+		tv_location.setText(PhoneLocationEngine.locationQuery(incomingNumber,
+				getApplicationContext()));
+		wm.addView(view, params);
+	}
+
+	@Override
+	public void onDestroy() {
+		// 取消电话监听
+		tm.listen(listener, PhoneStateListener.LISTEN_NONE);
+		super.onDestroy();
+	}
+
+}

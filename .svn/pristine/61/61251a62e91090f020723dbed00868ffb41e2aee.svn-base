@@ -1,0 +1,56 @@
+package com.itheima62.mobileguard.engine;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
+
+import android.content.Context;
+
+/**
+ * 获取所有运行中进程的信息
+ * @author Administrator
+ *
+ */
+public class TaskManagerEngine {
+	
+	/**
+	 * @return
+	 *    总内存大小
+	 */
+	public static long getTotalMemSize(Context context){
+		long size = 0;
+		
+		/*//Activity管理器,获取运行相关信息
+		ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+		
+		MemoryInfo outInfo = new MemoryInfo();
+		//MemoryInfo 存放内存的信息
+		am.getMemoryInfo(outInfo );
+		//获取总内存大小，16级别以上  ,读取内存文件
+		size =  outInfo.totalMem;*/
+		
+		//读取配置文件来获取总内存大小
+		
+		File file = new File("/proc/meminfo");
+		try {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+			////zip流  pipe流
+			
+			String totalMemInfo = reader.readLine();
+			
+			int startIndex = totalMemInfo.indexOf(':');
+			int endIndex = totalMemInfo.indexOf('k');
+			//单位是kb
+			totalMemInfo = totalMemInfo.substring(startIndex + 1,endIndex).trim();
+			size = Long.parseLong(totalMemInfo);
+			size *= 1024;//byte单位
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return size;
+	}
+}

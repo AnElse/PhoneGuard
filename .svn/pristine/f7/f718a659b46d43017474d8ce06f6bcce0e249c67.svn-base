@@ -1,0 +1,35 @@
+package com.itheima62.mobileguard.activities;
+
+import com.itheima62.mobileguard.R;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.ListView;
+
+/**
+ * @author Administrator
+ * 通讯卫士的数据处理,短信和电话
+ */
+public class TelSmsSafeActivity extends Activity {
+	
+	private ListView lv_safenumbers;
+	private Button bt_addSafeNumber;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		
+		initView();//初始化界面
+	}
+
+	private void initView() {
+		setContentView(R.layout.activity_telsmssafe);
+		//显示安全号码listview
+		lv_safenumbers = (ListView) findViewById(R.id.lv_telsms_safenumbers);
+	
+		//添加黑名单数据的按钮
+		bt_addSafeNumber = (Button) findViewById(R.id.bt_telsms_addsafenumber);
+	}
+}

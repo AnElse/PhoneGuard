@@ -1,0 +1,109 @@
+package com.itheima62.mobileguard.activities;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
+import com.itheima62.mobileguard.R;
+
+/**
+ * @author Administrator
+ * 通讯卫士的数据处理,短信和电话
+ */
+public class TelSmsSafeActivity extends Activity {
+	
+	protected static final int LOADING = 1;
+	protected static final int FINISH = 2;
+	private ListView lv_safenumbers;
+	private Button bt_addSafeNumber;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		
+		initView();//初始化界面
+		
+		initData();//初始化数据
+	}
+	
+	private Handler handler = new Handler(){
+		public void handleMessage(android.os.Message msg) {
+			switch (msg.what) {
+			case LOADING://正在加载数据
+				//显示加载数据的进度
+				pb_loading.setVisibility(View.VISIBLE);
+				
+				//隐藏listview
+				lv_safenumbers.setVisibility(View.GONE);
+
+				//隐藏没有数据
+				tv_nodata.setVisibility(View.GONE);
+				break;
+				
+			case FINISH://数据加载完成
+				//判断是否有数据
+				//有数据
+					//显示listview
+					lv_safenumbers.setVisibility(View.VISIBLE);
+					
+					//隐藏没有数据
+					tv_nodata.setVisibility(View.GONE);
+					
+					//隐藏加载数据的进度
+					pb_loading.setVisibility(View.GONE);
+				
+				//没有数据
+					//隐藏listview
+					lv_safenumbers.setVisibility(View.GONE);
+					
+					//显示没有数据
+					tv_nodata.setVisibility(View.VISIBLE);
+					
+					//隐藏加载数据的进度
+					pb_loading.setVisibility(View.GONE);
+			break;
+
+			default:
+				break;
+			}
+		};
+	};
+	private TextView tv_nodata;
+	private ProgressBar pb_loading;
+
+	private void initData() {
+		//从db中取黑名单数据，子线程取
+		new Thread(){
+			public void run() {
+				
+				//取数据之前，发个消息显示正在加载数据的进度条
+				
+				//取数据
+				
+				//取数据完成，发消息通知取数据完成
+				
+			};
+		}.start();
+	}
+
+	private void initView() {
+		setContentView(R.layout.activity_telsmssafe);
+		//显示安全号码listview
+		lv_safenumbers = (ListView) findViewById(R.id.lv_telsms_safenumbers);
+	
+		//添加黑名单数据的按钮
+		bt_addSafeNumber = (Button) findViewById(R.id.bt_telsms_addsafenumber);
+		
+		//没有数据显示的文本
+		tv_nodata = (TextView) findViewById(R.id.tv_telsms_nodata);
+		
+		//正在加载数据的进度
+		pb_loading = (ProgressBar) findViewById(R.id.pb_telsms_loading);
+	}
+}

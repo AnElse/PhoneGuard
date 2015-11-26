@@ -1,0 +1,24 @@
+package com.itheima62.mobileguard.engine;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+
+/**
+ * @author Administrator
+ * 读取手机联系人的功能类
+ */
+public class ReadContantsEngine {
+	/**
+	 * 读取手机联系人
+	 */
+	public static void readContants(Context context){
+		Uri uriContants = Uri.parse("content://com.android.contacts/contacts");
+		Cursor cursor = context.getContentResolver().query(uriContants, new String[]{"_id"}, null, null, null);
+		//循环取数据 
+		while(cursor.moveToNext()){
+			//直接打印id
+			System.out.println(cursor.getString(0));
+		}
+	}
+}

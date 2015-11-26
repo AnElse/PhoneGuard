@@ -1,0 +1,12 @@
+package com.itheima62.mobileguard.activities;
+
+import android.app.Activity;
+import android.os.Bundle;
+
+public class AppManagerActivity extends Activity {
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+	}
+}

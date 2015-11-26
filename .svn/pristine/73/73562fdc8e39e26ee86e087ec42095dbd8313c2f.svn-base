@@ -1,0 +1,104 @@
+package com.itheima62.mobileguard.engine;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Environment;
+import android.os.SystemClock;
+
+/**
+ * 短信备份和还原的业务类封装
+ * @author Administrator
+ *
+ */
+public class SmsEngine {
+	
+	private static class Data{
+		int progress;
+	}
+     /**
+     * 短信的备份
+     */
+    public static void smsBaike(Activity context,final ProgressDialog pd){
+    	 //1,通过内容提供者获取到短信
+    	Uri uri = Uri.parse("content://sms");
+		//获取电话记录的联系人游标
+		final Cursor cursor = context.getContentResolver().query(uri, new String[]{"address","date","body","type"}, null, null, " _id desc");
+		
+		//2,写到文件中
+		File file = new File(Environment.getExternalStorageDirectory(),"sms.xml");
+		
+		try {
+			FileOutputStream fos = new FileOutputStream(file);
+			
+			PrintWriter out = new PrintWriter(fos);
+			context.runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					pd.setMax(cursor.getCount());//设置进度条总进度
+					pd.show();
+				}
+			});
+			
+			final Data data = new Data();
+			
+			//写根标记
+			out.println("<smses count='" + cursor.getCount() + "'>");
+			while (cursor.moveToNext()) {
+				data.progress ++;
+				SystemClock.sleep(300);
+				//取短信
+				out.println("<sms>");
+				
+					//address 封装
+					out.println("<address>" + cursor.getString(0) + "</address>");
+					//date 封装
+					out.println("<date>" + cursor.getString(1) + "</date>");
+					//body 封装
+					out.println("<body>" + cursor.getString(2) + "</body>");
+					//type 封装
+					out.println("<type>" + cursor.getString(3) + "</type>");
+				
+				out.println("</sms>");
+				// 封装成xml标记
+				
+				context.runOnUiThread(new Runnable() {
+					
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						pd.setProgress(data.progress);
+					}
+				});
+				
+			}
+			//写根标记结束标记
+			out.println("</smses>");
+			
+			context.runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					pd.dismiss();
+				}
+			});
+			
+			out.flush();
+			out.close();//关闭流
+			cursor.close();//关闭游标
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+}
